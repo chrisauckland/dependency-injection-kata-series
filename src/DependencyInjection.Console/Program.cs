@@ -1,6 +1,4 @@
 ﻿using Autofac;
-using DependencyInjection.Console.CharacterWriters;
-using DependencyInjection.Console.SquarePainters;
 using NDesk.Options;
 
 namespace DependencyInjection.Console
@@ -35,21 +33,7 @@ namespace DependencyInjection.Console
         private static void BuildContainer(bool useColors, string pattern)
         {
             var containerBuilder = new ContainerBuilder();
-            containerBuilder.Register(c => new AsciiWriter()).Keyed<ICharacterWriter>(false);
-            containerBuilder.Register(c => new ColorWriter(c.ResolveKeyed<ICharacterWriter>(false))).Keyed<ICharacterWriter>(true);
-            containerBuilder.Register(c => new PatternWriter(c.ResolveKeyed<ICharacterWriter>(useColors))).AsSelf();
-
-            containerBuilder.Register(c => new CircleSquarePainter()).Keyed<ISquarePainter>("circle");
-            containerBuilder.Register(c => new OddEvenSquarePainter()).Keyed<ISquarePainter>("oddeven");
-            containerBuilder.Register(c => new WhiteSquarePainter()).Keyed<ISquarePainter>("white");
-
-            containerBuilder.Register(c => new PatternGenerator(c.ResolveKeyed<ISquarePainter>(pattern))).AsSelf();
-
-            containerBuilder.Register(
-                c =>
-                    new PatternApp(c.Resolve<PatternWriter>(), c.Resolve<PatternGenerator>()))
-                .AsSelf();
-
+            containerBuilder.RegisterModule(new InjectionModule() {UseColors = useColors, Pattern = pattern}) ;
             m_Container = containerBuilder.Build();
         }
     }
