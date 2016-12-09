@@ -1,4 +1,5 @@
 ﻿using System;
+using Autofac;
 using DependencyInjection.Console.CharacterWriters;
 using DependencyInjection.Console.SquarePainters;
 using NDesk.Options;
@@ -7,6 +8,8 @@ namespace DependencyInjection.Console
 {
     internal class Program
     {
+        private static IContainer m_Container;
+
         private static void Main(string[] args)
         {
             var useColors = false;
@@ -23,7 +26,9 @@ namespace DependencyInjection.Console
             };
             optionSet.Parse(args);
 
-            var characterWriter = GetCharacterWriter(useColors);
+            BuildContainer();
+
+            var characterWriter = m_Container.ResolveKeyed<ICharacterWriter>(useColors);
             var patternWriter = new PatternWriter(characterWriter);
             var squarePainter = GetSquarePainter(pattern);
             var patternGenerator = new PatternGenerator(squarePainter);
@@ -51,6 +56,14 @@ namespace DependencyInjection.Console
                 default:
                     throw new ArgumentException($"Pattern '{pattern}' not found!");
             }
+        }
+
+        private static void BuildContainer()
+        {
+            var containerBuilder = new ContainerBuilder();
+            containerBuilder.Register(c => new AsciiWriter()).Keyed<ICharacterWriter>(false);
+            containerBuilder.Register(c => new ColorWriter(c.ResolveKeyed<ICharacterWriter>(false))).Keyed<ICharacterWriter>(true);
+            m_Container = containerBuilder.Build();
         }
     }
 }
